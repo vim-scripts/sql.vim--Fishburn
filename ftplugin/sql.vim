@@ -1,8 +1,8 @@
 " SQL filetype plugin file
 " Language:    SQL (Common for Oracle, Microsoft SQL Server, Sybase)
-" Version:     0.07
+" Version:     0.08
 " Maintainer:  David Fishburn <fishburn at ianywhere dot com>
-" Last Change: Sun Feb 20 2005 9:14:47 PM
+" Last Change: Mon Feb 21 2005 7:27:36 AM
 " Download:    http://vim.sourceforge.net/script.php?script_id=454
 
 " This file should only contain values that are common to all SQL languages
@@ -18,7 +18,7 @@ if exists("b:did_ftplugin")
 endif
 
 let s:save_cpo = &cpo
-set cpo
+set cpo=
 
 " Don't load another plugin for this buffer
 let b:did_ftplugin = 1
