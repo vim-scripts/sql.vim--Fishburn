@@ -1,0 +1,72 @@
+This is a mirror of http://www.vim.org/scripts/script.php?script_id=454
+
+This file should only contain values that are common to all SQL languages Oracle, Microsoft SQL Server, Sybase ASA/ASE, MySQL, and so on.
+
+Attention Vim7 users
+-----------------------------
+Version 1.0 has been included with Vim7.0.  It adds additional functions to allow you to choose which SQL dialect to load by default, or per buffer.  See :h sql.txt for more details.
+Version 0.04 is included with Vim 6.3.
+
+Patterns have been defined for the matchit plugin, to use the % command to match statements.  Supported patterns are:
+        begin
+        end
+                                   
+        if
+        elseif | elsif
+        else [if]
+        end if
+                                   
+        [while condition] loop
+            leave
+            break
+            continue
+            exit
+        end loop
+                                   
+        for
+            leave
+            break
+            continue
+            exit
+        end loop
+                                   
+        case
+        when 
+        when
+        end case
+                                   
+        merge
+        when not matched
+        when matched
+                                   
+        EXCEPTION
+        WHEN column_not_found THEN
+        WHEN OTHERS THEN
+
+Define how to find the macro definition of a variable using the various
+[d, [D, [_CTRL_D and so on features ( see :h [d )
+
+Match these values ignoring case:
+ie  DECLARE varname INTEGER
+
+Added additional buffer mappings which work in both normal and visual mode:
+        ]] - next BEGIN
+        [[ - previous BEGIN
+        ][ - next END
+        [] - previous END
+
+The following mappings also work in normal and visual mode.
+A global variable has been defined to control the behaviour of these maps.  You can override this variable in your vimrc file if it is not complete, or as new objects are added to other databases.
+    let g:ftplugin_sql_objects = 'function,procedure,event,' .
+                \ '\(existing\\|global\s\+temporary\s\+\)\?table,trigger' .
+                \ ',schema,service,publication,database,datatype,domain' .
+                \ ',index,subscription,synchronization,view,variable'
+
+        ]} - Next CREATE statement (of the above types)
+        [{ - Previous CREATE statement (of the above types)
+
+These mappings also work in both normal and visual mode.
+        ]" - Next comment
+        [" - End of previous comment 
+
+
