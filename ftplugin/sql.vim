@@ -1,8 +1,8 @@
 " SQL filetype plugin file
 " Language:    SQL (Common for Oracle, Microsoft SQL Server, Sybase)
-" Version:     0.05
+" Version:     0.06
 " Maintainer:  David Fishburn <fishburn at ianywhere dot com>
-" Last Change: Thu Nov 25 2004 10:50:06 AM
+" Last Change: Sat Feb 19 2005 9:32:59 PM
 " Download:    http://vim.sourceforge.net/script.php?script_id=454
 
 " This file should only contain values that are common to all SQL languages
@@ -53,6 +53,10 @@ if !exists("b:match_words")
     "     exit
     " end loop
     "
+    " do
+    "     statements
+    " doend
+    "
     " case
     " when 
     " when
@@ -76,12 +80,12 @@ if !exists("b:match_words")
                 \ '\<elsif\>\|\<elseif\>\|\<else\>:'.
                 \ '\<end\s\+if\>,'.
                 \
-                \ '\<while\>.*\<loop\>\|'.
-                \ '\%(\<while\>.*\)\@<!\<loop\>\|'.
+                \ '\<do\>\|'.
+                \ '\<while\>\|'.
                 \ '\%(' . s:notend . '\<loop\>\)\|'.
                 \ '\%(' . s:notend . '\<for\>\):'.
                 \ '\<exit\>\|\<leave\>\|\<break\>\|\<continue\>:'.
-                \ '\<end\s\+\%(for\|loop\>\),'.
+                \ '\%(\<end\s\+\%(for\|loop\>\)\)\|\<doend\>,'.
                 \
                 \ '\%('. s:notend . '\<case\>\):'.
                 \ '\%('.s:when_no_matched_or_others.'\):'.
@@ -113,31 +117,58 @@ let &l:define = '\c\(DECLARE\|IN\|OUT\|INOUT\)\s*'
 
 " Mappings to move to the next BEGIN ... END block
 " \W - no characters or digits
-map <buffer> <silent> ]] :call search('\c^\s*begin\>', 'W' )<CR>
-map <buffer> <silent> [[ :call search('\c^\s*begin\>', 'bW' )<CR>
-map <buffer> <silent> ][ :call search('\c^\s*end\W*$', 'W' )<CR>
-map <buffer> <silent> [] :call search('\c^\s*end\W*$', 'bW' )<CR>
+nmap <buffer> <silent> ]] :call search('\c^\s*begin\>', 'W' )<CR>
+nmap <buffer> <silent> [[ :call search('\c^\s*begin\>', 'bW' )<CR>
+nmap <buffer> <silent> ][ :call search('\c^\s*end\W*$', 'W' )<CR>
+nmap <buffer> <silent> [] :call search('\c^\s*end\W*$', 'bW' )<CR>
+vmap <buffer> <silent> ]] /\c^\s*begin\><CR>
+vmap <buffer> <silent> [[ ?\c^\s*begin<CR>
+vmap <buffer> <silent> ][ /\c^\s*end\W*$<CR>
+vmap <buffer> <silent> [] ?\c^\s*end\W*$<CR>
 
+
+" Predefined SQL objects what are used by the below mappings using
+" the ]} style maps.
+" This global variable allows the users to override it's value
+" from within their vimrc.
+if !exists('g:ftplugin_sql_objects')
+    let g:ftplugin_sql_objects = 'function,procedure,event,' .
+                \ '\(existing\\|global\s\+temporary\s\+\)\?table,trigger' .
+                \ ',schema,service,publication,database,datatype,domain' .
+                \ ',index,subscription,synchronization,view,variable'
+endif
+
+let s:ftplugin_sql_objects = 
+            \ '\c^\s*' .
+            \ '\(create\s\+\(or\s\+replace\s\+\)\?\)\?' .
+            \ '\<\(' .
+            \ substitute(g:ftplugin_sql_objects, ',', '\\\\|', 'g') .
+            \ '\)\>' 
 
 " Mappings to move to the next CREATE ... block
-map <buffer> <silent> ]} :call search('\c^\s*\(create\s\+\(or\s\+replace\s\+\)\?\)\?\<\(function\\|procedure\\|event\\|table\\|trigger\\|schema\)\>', 'W' )<CR>
-map <buffer> <silent> [{ :call search('\c^\s*\(create\s\+\(or\s\+replace\s\+\)\?\)\?\<\(function\\|procedure\\|event\\|table\\|trigger\\|schema\)\>', 'bW' )<CR>
+" map <buffer> <silent> ]} :call search(g:ftplugin_sql_objects, 'W' )<CR>
+" nmap <buffer> <silent> [{ :call search('\c^\s*\(create\s\+\(or\s\+replace\s\+\)\?\)\?\<\(function\\|procedure\\|event\\|table\\|trigger\\|schema\)\>', 'bW' )<CR>
+" exec 'nmap <buffer> <silent> ]} /'.s:ftplugin_sql_objects.'<CR>'
+exec "nmap <buffer> <silent> ]} :call search('".s:ftplugin_sql_objects."', 'W')<CR>"
+exec "nmap <buffer> <silent> [{ :call search('".s:ftplugin_sql_objects."', 'bW')<CR>"
+" Could not figure out how to use a :call search() string in visual mode
+" without it ending visual mode
+exec 'vmap <buffer> <silent> ]} /'.s:ftplugin_sql_objects.'<CR>'
+exec 'vmap <buffer> <silent> [{ ?'.s:ftplugin_sql_objects.'<CR>'
+" vmap <buffer> <silent> ]} /\c^\s*\(create\s\+\(or\s\+replace\s\+\)\?\)\?\<\(function\\|procedure\\|event\\|table\\|trigger\\|schema\)\><CR>
+" vmap <buffer> <silent> [{ ?\c^\s*\(create\s\+\(or\s\+replace\s\+\)\?\)\?\<\(function\\|procedure\\|event\\|table\\|trigger\\|schema\)\><CR>
 
 " Mappings to move to the next COMMENT
 "
 " Had to double the \ for the \| separator since this has a special
 " meaning on maps
-let b:comment_leader = '\%(--\\|\/\/\\|\*\\|/\*\\|\*\/\)'
+let b:comment_leader = '\(--\\|\/\/\\|\*\\|\/\*\\|\*\/\)'
 " Find the start of the next comment
-let b:comment_start  = "call search('".
-            \ '^\(\s*'.b:comment_leader.'.*\n\)\@<!'.
-            \ '\(\s*'.b:comment_leader.'\)'.
-            \"', 'W')"
+let b:comment_start  = '^\(\s*'.b:comment_leader.'.*\n\)\@<!'.
+            \ '\(\s*'.b:comment_leader.'\)'
 " Find the end of the previous comment
-let b:comment_end = "call search('".
-            \ '\%(^\s*'.b:comment_leader.'.*\n\)'.
-            \ '\%(^\s*'.b:comment_leader.'\)\@!'.
-            \ "', 'bW')"
+let b:comment_end = '\(^\s*'.b:comment_leader.'.*\n\)'.
+            \ '\(^\s*'.b:comment_leader.'\)\@!'
 " Skip over the comment
 let b:comment_jump_over  = "call search('".
             \ '^\(\s*'.b:comment_leader.'.*\n\)\@<!'.
@@ -145,12 +176,11 @@ let b:comment_jump_over  = "call search('".
 let b:comment_skip_back  = "call search('".
             \ '^\(\s*'.b:comment_leader.'.*\n\)\@<!'.
             \ "', 'bW')"
-" Move around comments
-exec 'noremap <silent><buffer> ]" :'.b:comment_start.'<CR>'
-exec 'noremap <silent><buffer> [" :'.b:comment_end.'<CR>'
-" Move past a comment
-" exec 'noremap <silent><buffer> [] :'.b:comment_jump_over.'<CR>'
-" exec 'noremap <silent><buffer> ][ :'.b:comment_skip_back.'<CR>'
+" Move to the start and end of comments
+exec 'nnoremap <silent><buffer> ]" /'.b:comment_start.'<CR>'
+exec 'nnoremap <silent><buffer> [" /'.b:comment_end.'<CR>'
+exec 'vnoremap <silent><buffer> ]" /'.b:comment_start.'<CR>'
+exec 'vnoremap <silent><buffer> [" /'.b:comment_end.'<CR>'
 
 " Comments can be of the form:
 "   /*
